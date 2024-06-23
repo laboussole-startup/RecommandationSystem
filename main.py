@@ -8,7 +8,7 @@ from auth.rooute import router as auth_router
 from model_orientation.routes import router_orientation
 from starlette.middleware.authentication import AuthenticationMiddleware
 from core.security import JWTAuth
-from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time  # Importer la fonction fetch_data_and_save_to_csv
+# from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time  # Importer la fonction fetch_data_and_save_to_csv
 
 app = FastAPI()
 
@@ -27,13 +27,11 @@ app.add_middleware(AuthenticationMiddleware, backend=JWTAuth())
 
 def health_check():
     # Appeler fetch_data_and_save_to_csv() au démarrage de l'application
+   
     # Charger les données à partir du fichier CSV
     return JSONResponse(content={"status": "Running!"})
 
-if __name__ == "__main__":
-    port = int(os.getenv('PORT', 8000))  # Utilise le port spécifié par l'environnement, par défaut 8000
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 
 

@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time 
+# from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time 
 
 # Charger les données à partir du fichier CSV
-data = get_last_update_time()
-if data is not None and datetime.now() - data < timedelta(days=30):
-    print("Les données sont à jour, pas besoin de les mettre à jour.")
-else:
-        # Les données CSV n'existent pas ou datent de plus de deux jours, mettre à jour à partir de la base de données
-    fetch_data_and_save_to_csv()
-    save_last_update_time(datetime.now())
+# data = get_last_update_time()
+# if data is not None and datetime.now() - data < timedelta(days=30):
+#     print("Les données sont à jour, pas besoin de les mettre à jour.")
+# else:
+#         # Les données CSV n'existent pas ou datent de plus de deux jours, mettre à jour à partir de la base de données
+#     fetch_data_and_save_to_csv()
+#     save_last_update_time(datetime.now())
 
 df = pd.read_csv("formations_with_centres_interet.csv")
 

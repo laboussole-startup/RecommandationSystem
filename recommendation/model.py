@@ -74,6 +74,7 @@ class Universite(Base):
     universite_id = Column(Integer, primary_key=True, autoincrement=True)
     nom = Column(String(255), unique=True, nullable=False)
     ville = Column(String(255), nullable=False)
+    pays = Column(String(255), nullable=False)
     descriptif = Column(Text, nullable=False)
     email = Column(String(255), nullable=False)
     telephone = Column(String(255), nullable=False)
