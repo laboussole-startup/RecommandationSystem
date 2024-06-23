@@ -37,4 +37,4 @@ def get_settings() -> Settings:
 
 # Exemple d'utilisation
 settings = get_settings()
-print(settings.DATABASE_URL)  # Vérifiez que l'URL est correctement formée
+

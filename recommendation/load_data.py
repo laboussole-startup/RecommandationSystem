@@ -3,56 +3,50 @@ import csv
 from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
-from recommendation.model import Filiere,Faculte,metiers
+from recommendation.model import Filiere,Faculte,metiers,Universite
 from core.config import CSV_FILE_PATH
 from core.database import get_db
 from sqlalchemy.orm import joinedload
+
 # Chemin du fichier CSV
-CSV_FILE_PATH = 'formations_with_centres_interet.csv'
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False)
-
-def get_last_update_time():
-    if os.path.exists(CSV_FILE_PATH):
-        # Récupérer la date de modification du fichier CSV
-        modification_time = datetime.fromtimestamp(os.path.getmtime(CSV_FILE_PATH))
-        return modification_time
-    else:
-        return None
-
-def save_last_update_time(update_time):
-
-    #Enregistrer la date et l'heure de la dernière mise à jour dans le fichier
-    with open(CSV_FILE_PATH, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['Last Update Time', update_time])
-
-
-
-
+CSV_FILE_PATH = 'data.csv'
 
 def fetch_data_and_save_to_csv():
     with get_db() as db:
-        # Query to join Faculte and Filiere tables
-        results = db.query(Filiere, Faculte).join(Faculte, Filiere.faculte_id == Faculte.faculte_id).all()
+        # Utilisation de joinedload pour éviter les boucles multiples et les jointures incorrectes
+        results = db.query(Filiere, Faculte, Universite.ville,Universite.pays) \
+                     .join(Faculte, Filiere.faculte_id == Faculte.faculte_id) \
+                     .join(Universite, Faculte.universite_id == Universite.universite_id) \
+                     .all()
 
-        # Get column names from both tables
+        # Récupérer les noms des colonnes de chaque table
         filiere_columns = [column.name for column in Filiere.__table__.columns]
         faculte_columns = [column.name for column in Faculte.__table__.columns]
 
-        # Write results to a CSV file
+        # Ajouter la colonne 'ville' spécifiquement
+        universite_columns = ['ville', 'pays']
+
+        # Écrire les résultats dans un fichier CSV
         with open(CSV_FILE_PATH, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            # Write column headers
-            writer.writerow(filiere_columns + faculte_columns)
-            # Write data rows
-            for filiere, faculte in results:
+            # Écrire les en-têtes de colonnes
+            writer.writerow(filiere_columns + faculte_columns + universite_columns)
+            # Écrire les lignes de données
+            for filiere, faculte, ville ,pays in results:
                 filiere_values = [getattr(filiere, column) for column in filiere_columns]
                 faculte_values = [getattr(faculte, column) for column in faculte_columns]
-                writer.writerow(filiere_values + faculte_values)
+                universite_values = [ville,pays]  # Ajoutez la ville seule
+                writer.writerow(filiere_values + faculte_values + universite_values)
+
+    # Ajouter un message de debug pour vérifier que le fichier a été créé
+    if os.path.exists(CSV_FILE_PATH):
+        print(f"Le fichier CSV '{CSV_FILE_PATH}' a été créé avec succès.")
+    else:
+        print(f"Erreur : Le fichier CSV '{CSV_FILE_PATH}' n'a pas été trouvé.")
 
 
-CSV_FILE_PATH = 'metiers_data.csv'
+
+
 def load_metiers_data():
     with get_db() as db:
         results = db.query(metiers).all()
@@ -65,3 +59,28 @@ def load_metiers_data():
         
         df = pd.DataFrame(metiers_data)
         return df
+    
+
+    
+
+
+
+def fetch_data_and_save_to_df():
+    
+    try:
+        fetch_data_and_save_to_csv()
+        # Utilisation de pandas pour lire le fichier CSV
+        df = pd.read_csv(CSV_FILE_PATH)
+
+        return df
+    except FileNotFoundError:
+        print(f"Erreur : Le fichier {CSV_FILE_PATH} n'a pas été trouvé")
+
+    except pd.errors.EmptyDataError:
+        print(f"Erreur : Aucune colonne à analyser dans le fichier {CSV_FILE_PATH}")
+
+    except Exception as e:
+        print(f"Erreur inattendue lors de la lecture du fichier CSV : {str(e)}")
+
+
+
