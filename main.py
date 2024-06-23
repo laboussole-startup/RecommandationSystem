@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from users.routes import router as guest_router, user_router
@@ -29,7 +30,10 @@ def health_check():
     # Charger les données à partir du fichier CSV
     return JSONResponse(content={"status": "Running!"})
 
-
+if __name__ == "__main__":
+    port = int(os.getenv('PORT', 8000))  # Utilise le port spécifié par l'environnement, par défaut 8000
+    import uvicorn
+    uvicorn.run(app, host="laboussole-edu.com/", port=port)
 
 
 
