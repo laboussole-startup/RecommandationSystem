@@ -33,7 +33,7 @@ def health_check():
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 8000))  # Utilise le port spécifié par l'environnement, par défaut 8000
     import uvicorn
-    uvicorn.run(app, host="laboussole-edu.com/", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 
