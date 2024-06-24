@@ -39,7 +39,7 @@ try:
 except Exception as e:
     print(f"Erreur lors du chargement et du traitement des données: {e}")
 
-def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
+def recommend_formations(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
     try:
         # Prétraitement et vectorisation des centres d'intérêt de l'utilisateur
         if user_interests:
@@ -83,13 +83,18 @@ def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = 
         # Récupération des données des cours recommandés
         recommended_courses_data = df.iloc[similar_indices]
 
-        # Conversion des données en une liste de dictionnaires
+          # Colonnes à inclure dans les résultats
+  
+
+        # Conversion des données en une liste de listes en incluant seulement les colonnes spécifiées
+        # Colonnes à inclure dans les résultats
+        columns_to_include = ["filieres_id","nom,descriptif","duree,cout","langue_enseignement","diplome_delivre","images_pc","images_telephone","images_tablettes","faculte_id","centre_interet","faculte_id"]
+
+       # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
         recommended_courses = []
         for _, row in recommended_courses_data.iterrows():
-            course_dict = {}
-            for column, value in row.items():
-                course_dict[column] = value
-            recommended_courses.append(course_dict)
+            course_info = {column: row[column] if column in row else None for column in columns_to_include}
+            recommended_courses.append(course_info)
 
         # Remplacement des valeurs NaN par une valeur par défaut (0.0)
         for course in recommended_courses:
@@ -108,17 +113,3 @@ def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = 
         print(f"Erreur lors de la recommandation des cours: {e}")
         return []
 
-# Exemple d'appel de la fonction de recommandation
-try:
-    recommendations = recommend_courses(
-        user_interests=["data science", "machine learning"],
-        pays_utilisateur="France",
-        historique_recherche_utilisateur=["deep learning", "AI"],
-        user_diplome="Bachelor",
-        page=1,
-        page_size=5
-    )
-    for course in recommendations:
-        print(course)
-except Exception as e:
-    print(f"Erreur lors de l'appel de la fonction de recommandation: {e}")

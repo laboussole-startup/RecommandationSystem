@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from users.routes import router as guest_router, user_router
-from recommendation.routes import router_recommandation,router_recommandation_metiers
+from recommendation.routes import router_recommandation,router_recommandation_metiers,router_recommandation_formation
 from auth.rooute import router as auth_router 
 from model_orientation.routes import router_orientation
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -17,6 +17,7 @@ app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(router_recommandation)
 app.include_router(router_orientation)
+app.include_router(router_recommandation_formation)
 
 app.include_router(router_recommandation_metiers)
 
