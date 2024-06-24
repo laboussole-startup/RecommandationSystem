@@ -40,9 +40,9 @@ def fetch_data_and_save_to_csv():
 
     # Ajouter un message de debug pour vérifier que le fichier a été créé
     if os.path.exists(CSV_FILE_PATH):
-        print(f"Le fichier CSV '{CSV_FILE_PATH}' a été créé avec succès.")
+        print("a été créé avec succès.")
     else:
-        print(f"Erreur : Le fichier CSV '{CSV_FILE_PATH}' n'a pas été trouvé.")
+        print("Erreur : Le fichier CSV  n'a pas été trouvé.")
 
 
 

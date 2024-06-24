@@ -1,96 +1,124 @@
 import re
 from typing import Dict, List, Union
 from datetime import datetime, timedelta
-from recommendation.load_data import fetch_data_and_save_to_df #,fetch_data_and_save_to_csv
+from recommendation.load_data import fetch_data_and_save_to_df
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
+try:
+    # Charger les données depuis une source externe
+    df = fetch_data_and_save_to_df()
+    CSV_FILE_PATH = 'data.csv'
 
+    # Supprimer la dernière ligne (potentiellement vide)
+    df.drop(df.index[-1], inplace=True)
 
+    # Fonction de prétraitement pour convertir le texte en minuscules
+    def preprocess(text):
+        text = str(text)
+        text = text.lower()
+        return text
 
-df=fetch_data_and_save_to_df()
-CSV_FILE_PATH = 'data.csv'
+    # Combinaison de colonnes pour former une colonne de texte à vectoriser
+    df["descriptions_and_caracteristiques"] = df["descriptif"] + " " + df["nom"] + " " + df["nom.1"] + " " + df["descriptif.1"] + " " + df["condition_admission"]
 
-# Charger les données à partir du fichier CSV
+    # Initialisation du vectoriseur TF-IDF et transformation des descriptions et caractéristiques
+    vectorizer = TfidfVectorizer()
+    descriptions_and_caracteristiques_tfidf = vectorizer.fit_transform(df["descriptions_and_caracteristiques"].apply(preprocess))
 
+    # Initialisation du vectoriseur TF-IDF et transformation des conditions d'admission
+    vectorizer_condition_admission = TfidfVectorizer()
+    condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["condition_admission"].apply(preprocess))
 
-df.drop(df.index[-1], inplace=True)  # Supprimer la dernière ligne (potentiellement vide)
+    # Initialisation du vectoriseur TF-IDF et transformation des pays
+    vectorizer_pays = TfidfVectorizer()
+    vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["pays"].apply(preprocess))
 
-# Fonction de prétraitement pour mettre le texte en minuscules
-def preprocess(text):
-    text = str(text)
-    text = text.lower()
-    return text
+except Exception as e:
+    print(f"Erreur lors du chargement et du traitement des données: {e}")
 
-# Combinaison de colonnes pour former une colonne de texte à vectoriser
-df["descriptions_and_caracteristiques"] = df["descriptif"] + " " + df["nom"] + " " + df["nom.1"] + " " + df["descriptif.1"]+""+df["condition_admission"]
+def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
+    try:
+        # Prétraitement et vectorisation des centres d'intérêt de l'utilisateur
+        if user_interests:
+            user_interests = preprocess(" ".join(user_interests))
+            user_vectortfidf = vectorizer.transform([user_interests])
+            cosine_scores = linear_kernel(user_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
+        else:
+            # Si les centres d'intérêt ne sont pas fournis, initialiser les scores à zéro
+            cosine_scores = np.zeros(descriptions_and_caracteristiques_tfidf.shape[0])
 
-# Initialisation du vectoriseur TF-IDF et transformation des descriptions et caractéristiques
-vectorizer = TfidfVectorizer()
-descriptions_and_caracteristiques_tfidf = vectorizer.fit_transform(df["descriptions_and_caracteristiques"].apply(preprocess))
-# Initialisation du vectoriseur TF-IDF et transformation des condition d'adminssion
-vectorizer_condition_admission = TfidfVectorizer()
-condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["condition_admission"].apply(preprocess))
-vectorizer_pays = TfidfVectorizer()
-vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["pays"].apply(preprocess))
+        # Prétraitement et vectorisation de l'historique de recherche de l'utilisateur
+        if historique_recherche_utilisateur:
+            historique_recherche_utilisateur_vectortfidf = vectorizer.transform([" ".join(historique_recherche_utilisateur)])
+            similarite_historique_recherche = linear_kernel(historique_recherche_utilisateur_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
+        else:
+            # Si l'historique de recherche n'est pas fourni, initialiser les scores à zéro
+            similarite_historique_recherche = np.zeros(descriptions_and_caracteristiques_tfidf.shape[0])
 
-# Fonction de recommandation de cours
-def recommend_courses(user_interests: List[str], pays_utilisateur: str, historique_recherche_utilisateur: List[str], user_diplome: str, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
-    # Prétraitement des centres d'intérêt de l'utilisateur
-    user_interests = preprocess(" ".join(user_interests))
-    
-    # Prétraitement et vectorisation de l'historique de recherche de l'utilisateur
-    historique_recherche_utilisateur_vectortfidf = vectorizer.transform([" ".join(historique_recherche_utilisateur)])
-    
-    # Prétraitement et vectorisation du pays de l'utilisateur
-    pays_vectortfidf = vectorizer_pays.transform([preprocess(pays_utilisateur)])
-    
-    # Prétraitement et vectorisation du diplôme de l'utilisateur
-    user_diplome_diplometfidf = vectorizer_condition_admission.transform([preprocess(user_diplome)])
+        # Prétraitement et vectorisation du pays de l'utilisateur
+        if pays_utilisateur:
+            pays_vectortfidf = vectorizer_pays.transform([preprocess(pays_utilisateur)])
+            cosine_scores_pays = linear_kernel(pays_vectortfidf, vectorizer_pays_tfidf).flatten()
+        else:
+            # Si le pays n'est pas fourni, initialiser les scores à zéro
+            cosine_scores_pays = np.zeros(vectorizer_pays_tfidf.shape[0])
 
-    # Vectorisation des centres d'intérêt de l'utilisateur
-    user_vectortfidf = vectorizer.transform([user_interests])
+        # Prétraitement et vectorisation du diplôme de l'utilisateur
+        if user_diplome:
+            user_diplome_diplometfidf = vectorizer_condition_admission.transform([preprocess(user_diplome)])
+            cosine_scores_diplome_user = linear_kernel(user_diplome_diplometfidf, condition_dadmission_tfidf).flatten()
+        else:
+            # Si le diplôme n'est pas fourni, initialiser les scores à zéro
+            cosine_scores_diplome_user = np.zeros(condition_dadmission_tfidf.shape[0])
 
-    # Calcul des scores de similarité cosinus entre le pays de l'utilisateur et les pays des universités
-    cosine_scores_pays = linear_kernel(pays_vectortfidf, vectorizer_pays_tfidf).flatten()
+        # Combinaison des scores de similarité en pondérant davantage les centres d'intérêt
+        combined_scores = (interest_weight * cosine_scores) + (history_weight * similarite_historique_recherche) + cosine_scores_diplome_user + cosine_scores_pays
+        
+        # Triage des indices des cours en fonction des scores combinés en ordre décroissant
+        similar_indices = combined_scores.argsort()[::-1]
+        
+        # Récupération des données des cours recommandés
+        recommended_courses_data = df.iloc[similar_indices]
 
-    # Calcul des scores de similarité cosinus entre les centres d'intérêt de l'utilisateur et les descriptions des cours
-    cosine_scores = linear_kernel(user_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
-    
-    # Calcul des scores de similarité cosinus entre l'historique de recherche et les descriptions des cours
-    similarite_historique_recherche = linear_kernel(historique_recherche_utilisateur_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
+        # Conversion des données en une liste de dictionnaires
+        recommended_courses = []
+        for _, row in recommended_courses_data.iterrows():
+            course_dict = {}
+            for column, value in row.items():
+                course_dict[column] = value
+            recommended_courses.append(course_dict)
 
-    # Calcul des scores de similarité cosinus entre le diplôme de l'utilisateur et les conditions d'admission
-    cosine_scores_diplome_user = linear_kernel(user_diplome_diplometfidf, condition_dadmission_tfidf).flatten()
-    
-    # Combinaison des scores de similarité en pondérant davantage les centres d'intérêt
-    combined_scores = (interest_weight * cosine_scores) + (history_weight * similarite_historique_recherche) + cosine_scores_diplome_user + cosine_scores_pays
-    
-    # Triage des indices des cours en fonction des scores combinés en ordre décroissant
-    similar_indices = combined_scores.argsort()[::-1]
-    
-    # Récupération des données des cours recommandés
-    recommended_courses_data = df.iloc[similar_indices]
-    
-    # Conversion des données en une liste de dictionnaires
-    recommended_courses = []
-    for _, row in recommended_courses_data.iterrows():
-        course_dict = {}
-        for column, value in row.items():
-            course_dict[column] = value
-        recommended_courses.append(course_dict)
-    
-    # Remplacement des valeurs NaN par une valeur par défaut (0.0)
-    for course in recommended_courses:
-        for key, value in course.items():
-            if isinstance(value, float) and np.isnan(value):
-                course[key] = 0.0
+        # Remplacement des valeurs NaN par une valeur par défaut (0.0)
+        for course in recommended_courses:
+            for key, value in course.items():
+                if isinstance(value, float) and np.isnan(value):
+                    course[key] = 0.0
 
-    # Implémentation de la pagination
-    start_index = (page - 1) * page_size  # Calcul de l'index de début
-    end_index = start_index + page_size  # Calcul de l'index de fin
-    paginated_courses = recommended_courses[start_index:end_index]  # Extraction de la sous-liste correspondant à la page
-    
-    return paginated_courses
+        # Implémentation de la pagination
+        start_index = (page - 1) * page_size  # Calcul de l'index de début
+        end_index = start_index + page_size  # Calcul de l'index de fin
+        paginated_courses = recommended_courses[start_index:end_index]  # Extraction de la sous-liste correspondant à la page
+
+        return paginated_courses
+
+    except Exception as e:
+        print(f"Erreur lors de la recommandation des cours: {e}")
+        return []
+
+# Exemple d'appel de la fonction de recommandation
+try:
+    recommendations = recommend_courses(
+        user_interests=["data science", "machine learning"],
+        pays_utilisateur="France",
+        historique_recherche_utilisateur=["deep learning", "AI"],
+        user_diplome="Bachelor",
+        page=1,
+        page_size=5
+    )
+    for course in recommendations:
+        print(course)
+except Exception as e:
+    print(f"Erreur lors de l'appel de la fonction de recommandation: {e}")
