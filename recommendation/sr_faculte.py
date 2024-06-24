@@ -88,7 +88,7 @@ def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = 
 
         # Conversion des données en une liste de listes en incluant seulement les colonnes spécifiées
         # Colonnes à inclure dans les résultats
-        columns_to_include = ["faculte_id","nom.1", "descriptif.1","condition_admission","email","telephone","images_pc.1","images_telephone.1","images_tablettes.1"]
+        columns_to_include = ["faculte_id","nom.1", "descriptif.1","condition_admission","email","telephone","images_pc.1","images_telephone.1","images_tablettes.1","universite_id","logo","nom.2"]
 
        # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
         recommended_courses = []
