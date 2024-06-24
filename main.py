@@ -2,37 +2,49 @@ from datetime import datetime, timedelta
 import os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from users.routes import router as guest_router, user_router
-from recommendation.routes import router_recommandation,router_recommandation_metiers,router_recommandation_formation
-from auth.rooute import router as auth_router 
+from recommendation.routes import router_recommandation, router_recommandation_metiers, router_recommandation_formation
+from auth.rooute import router as auth_router
 from model_orientation.routes import router_orientation
 from starlette.middleware.authentication import AuthenticationMiddleware
 from core.security import JWTAuth
-# from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time  # Importer la fonction fetch_data_and_save_to_csv
+from recommendation.load_data import fetch_data_and_save_to_df  # Assurez-vous que fetch_data_and_save_to_df est correctement importé
 
 app = FastAPI()
 
+# Ajouter CORS Middleware pour permettre les requêtes depuis différentes origines
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Remplacez par ["http://localhost:3000"] ou les origines spécifiques si nécessaire
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Ajouter les routes
 app.include_router(guest_router)
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(router_recommandation)
 app.include_router(router_orientation)
 app.include_router(router_recommandation_formation)
-
 app.include_router(router_recommandation_metiers)
 
-# Add Middleware
+# Ajouter Middleware pour l'authentification
 app.add_middleware(AuthenticationMiddleware, backend=JWTAuth())
 
+@app.on_event("startup")
+async def startup_event():
+    # Appeler fetch_data_and_save_to_df() au démarrage de l'application
+    try:
+        df = fetch_data_and_save_to_df()
+        # Traitez les données si nécessaire
+    except Exception as e:
+        print(f"Erreur lors du chargement des données au démarrage: {e}")
+
 @app.get('/')
-
 def health_check():
-    # Appeler fetch_data_and_save_to_csv() au démarrage de l'application
-   
-    # Charger les données à partir du fichier CSV
     return JSONResponse(content={"status": "Running!"})
-
-
-
 
 
