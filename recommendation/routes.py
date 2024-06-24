@@ -7,7 +7,7 @@ from recommendation.sr_formation import recommend_formations
 
 router_recommandation = APIRouter(
     prefix="/recommandation_faculté",
-    tags=["Recommandation_faculte"],
+    tags=["Recommandation_faculté"],
     responses={404: {"description": "Not found"}},
     #dependencies=[Depends(oauth2_scheme)]
 )
