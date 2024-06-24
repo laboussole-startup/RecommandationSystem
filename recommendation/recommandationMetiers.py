@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
 from recommendation.load_data import load_metiers_data
-from recommendation.sr import preprocess
+from recommendation.sr_faculte import preprocess
 
 # Charger les données à partir de la base de données
 try:
