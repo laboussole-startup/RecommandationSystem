@@ -78,6 +78,7 @@ class Universite(Base):
     descriptif = Column(Text, nullable=False)
     email = Column(String(255), nullable=False)
     telephone = Column(String(255), nullable=False)
+    logo = Column(Text)
     site_web = Column(String(255))
     facultes = relationship("Faculte", back_populates="universite")
 

@@ -14,7 +14,7 @@ CSV_FILE_PATH = 'data.csv'
 def fetch_data_and_save_to_csv():
     with get_db() as db:
         # Utilisation de joinedload pour éviter les boucles multiples et les jointures incorrectes
-        results = db.query(Filiere, Faculte, Universite.ville,Universite.pays) \
+        results = db.query(Filiere, Faculte, Universite.ville,Universite.pays,Universite.logo,Universite.nom,Universite.universite_id) \
                      .join(Faculte, Filiere.faculte_id == Faculte.faculte_id) \
                      .join(Universite, Faculte.universite_id == Universite.universite_id) \
                      .all()
@@ -24,7 +24,7 @@ def fetch_data_and_save_to_csv():
         faculte_columns = [column.name for column in Faculte.__table__.columns]
 
         # Ajouter la colonne 'ville' spécifiquement
-        universite_columns = ['ville', 'pays']
+        universite_columns = ['ville', 'pays','logo','nom',"universite_id"]
 
         # Écrire les résultats dans un fichier CSV
         with open(CSV_FILE_PATH, mode='w', newline='', encoding='utf-8') as file:
@@ -32,10 +32,10 @@ def fetch_data_and_save_to_csv():
             # Écrire les en-têtes de colonnes
             writer.writerow(filiere_columns + faculte_columns + universite_columns)
             # Écrire les lignes de données
-            for filiere, faculte, ville ,pays in results:
+            for filiere, faculte, ville ,pays,nom,logo,universite_id in results:
                 filiere_values = [getattr(filiere, column) for column in filiere_columns]
                 faculte_values = [getattr(faculte, column) for column in faculte_columns]
-                universite_values = [ville,pays]  # Ajoutez la ville seule
+                universite_values = [ville,pays,nom,logo,universite_id]  # Ajoutez la ville seule
                 writer.writerow(filiere_values + faculte_values + universite_values)
 
     # Ajouter un message de debug pour vérifier que le fichier a été créé
