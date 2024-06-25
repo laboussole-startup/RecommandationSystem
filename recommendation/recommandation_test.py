@@ -112,3 +112,4 @@ def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = 
     except Exception as e:
         print(f"Erreur lors de la recommandation des cours: {e}")
         return []
+
