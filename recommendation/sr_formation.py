@@ -1,28 +1,27 @@
 import re
 from typing import Dict, List, Union
 from datetime import datetime, timedelta
-from recommendation.load_data import fetch_data_and_save_to_df
+from recommendation.load_data import load_data
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
+# Fonction de prétraitement pour convertir le texte en minuscules
+def preprocess(text):
+    text = str(text)
+    text = text.lower()
+    return text
+
 try:
     # Charger les données depuis une source externe
-    df = fetch_data_and_save_to_df()
-    CSV_FILE_PATH = 'data.csv'
+    df = load_data()
 
     # Supprimer la dernière ligne (potentiellement vide)
     df.drop(df.index[-1], inplace=True)
-
-    # Fonction de prétraitement pour convertir le texte en minuscules
-    def preprocess(text):
-        text = str(text)
-        text = text.lower()
-        return text
-
+    
     # Combinaison de colonnes pour former une colonne de texte à vectoriser
-    df["descriptions_and_caracteristiques"] = df["descriptif"] + " " + df["nom"] + " " + df["nom.1"] + " " + df["descriptif.1"] + " " + df["condition_admission"]
+    df["descriptions_and_caracteristiques"] = df["filiere_descriptif"] + " " + df["filiere_nom"] + " " + df["faculte_nom"] + " " + df["faculte_descriptif"]
 
     # Initialisation du vectoriseur TF-IDF et transformation des descriptions et caractéristiques
     vectorizer = TfidfVectorizer()
@@ -30,16 +29,16 @@ try:
 
     # Initialisation du vectoriseur TF-IDF et transformation des conditions d'admission
     vectorizer_condition_admission = TfidfVectorizer()
-    condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["condition_admission"].apply(preprocess))
+    condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["faculte_condition_admission"].apply(preprocess))
 
     # Initialisation du vectoriseur TF-IDF et transformation des pays
     vectorizer_pays = TfidfVectorizer()
-    vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["pays"].apply(preprocess))
+    vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["universite_pays"].apply(preprocess))
 
 except Exception as e:
     print(f"Erreur lors du chargement et du traitement des données: {e}")
 
-def recommend_formations(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
+def formations_recommandation(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 2.0, history_weight: float = 1.0, country_weight: float = 1.5, diploma_weight: float = 1.5) -> List[Dict[str, Union[str, float]]]:
     try:
         # Prétraitement et vectorisation des centres d'intérêt de l'utilisateur
         if user_interests:
@@ -75,32 +74,32 @@ def recommend_formations(user_interests: List[str] = None, pays_utilisateur: str
             cosine_scores_diplome_user = np.zeros(condition_dadmission_tfidf.shape[0])
 
         # Combinaison des scores de similarité en pondérant davantage les centres d'intérêt
-        combined_scores = (interest_weight * cosine_scores) + (history_weight * similarite_historique_recherche) + cosine_scores_diplome_user + cosine_scores_pays
+        combined_scores = (interest_weight * cosine_scores) + (history_weight * similarite_historique_recherche) + (country_weight * cosine_scores_pays) + (diploma_weight * cosine_scores_diplome_user)
         
         # Triage des indices des cours en fonction des scores combinés en ordre décroissant
         similar_indices = combined_scores.argsort()[::-1]
         
         # Récupération des données des cours recommandés
-        recommended_courses_data = df.iloc[similar_indices]
+        recommended_formation_data = df.iloc[similar_indices]
 
-          # Colonnes à inclure dans les résultats
-  
-
-        # Conversion des données en une liste de listes en incluant seulement les colonnes spécifiées
         # Colonnes à inclure dans les résultats
-        columns_to_include = ["filieres_id","nom,descriptif","duree,cout","langue_enseignement","diplome_delivre","images_pc","images_telephone","images_tablettes","faculte_id","centre_interet","faculte_id"]
+        columns_to_include = ["filiere_id", "filiere_nom", "filiere_descriptif", "filiere_email", "filiere_telephone", "filiere_images_pc", "filiere_images_telephone", "filiere_images_tablettes", "faculte_id"]
 
-       # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
+        # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
         recommended_courses = []
-        for _, row in recommended_courses_data.iterrows():
-            course_info = {column: row[column] if column in row else None for column in columns_to_include}
-            recommended_courses.append(course_info)
+        seen_courses = set()  # Ensemble pour suivre les identifiants uniques des cours
+        for _, row in recommended_formation_data.iterrows():
+            course_id = row["filiere_id"]
+            if course_id not in seen_courses:
+                course_info = {column: row[column] if column in row else None for column in columns_to_include}
+                recommended_courses.append(course_info)
+                seen_courses.add(course_id)  # Ajouter l'identifiant du cours à l'ensemble pour éviter les doublons
 
-        # Remplacement des valeurs NaN par une valeur par défaut (0.0)
-        for course in recommended_courses:
-            for key, value in course.items():
+        # Remplacer les valeurs NaN par une valeur par défaut (0.0)
+        for metier in recommended_courses:
+            for key, value in metier.items():
                 if isinstance(value, float) and np.isnan(value):
-                    course[key] = 0.0
+                    metier[key] = 0.0
 
         # Implémentation de la pagination
         start_index = (page - 1) * page_size  # Calcul de l'index de début
@@ -112,4 +111,3 @@ def recommend_formations(user_interests: List[str] = None, pays_utilisateur: str
     except Exception as e:
         print(f"Erreur lors de la recommandation des cours: {e}")
         return []
-

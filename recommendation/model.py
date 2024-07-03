@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DECIMAL, func
+from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey, DECIMAL, func
 from sqlalchemy.orm import relationship
 from core.database import Base
 from sqlalchemy.orm import relationship
@@ -131,3 +132,55 @@ class metiers(Base):
     faculte = Column(String(255), nullable=True)
     ecole = Column(String(255), nullable=True)
     filiere = Column(String(255), nullable=True)
+
+
+
+# class User(Base):
+#     __tablename__ = 'user'
+#     user_id = Column(Integer, primary_key=True, autoincrement=True)
+#     user_name = Column(String(255))
+
+# class SearchHistory(Base):
+#     __tablename__ = 'recherches'
+
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     user_id = Column(Integer, ForeignKey('user.user_id'))
+#     keywords = Column(String(255))
+#     timestamp = Column(DateTime, default=datetime.utcnow)
+
+#     # Relationship to User
+#     user = relationship("User", backref="search_history")
+
+
+class Utilisateur(Base):
+    __tablename__ = 'utilisateur'
+    
+    id_utilisateur = Column(Integer, primary_key=True, autoincrement=True)
+    nom = Column(String(255))
+    prenom = Column(String(255))
+    pays = Column(String(255))
+    ville = Column(String(255))
+    niveau = Column(String(50))
+    genre = Column(String(10))
+    date_de_naissance = Column(DateTime)
+    mail = Column(String(255))
+    mot_de_passe = Column(String(255))
+    telephone = Column(String(20))
+    centre_interet = Column(Text)
+    photo_de_profil = Column(Text)  # Bytea is not natively supported by all DBs, use Text
+    dernier_diplome = Column(String(255))
+    serie = Column(String(50))
+    derniere_connexion = Column(DateTime)
+    date_inscription = Column(DateTime)
+
+    recherches = relationship('Recherches', back_populates='utilisateur')
+
+class Recherches(Base):
+    __tablename__ = 'recherches'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_utilisateur = Column(Integer, ForeignKey('utilisateur.id_utilisateur'))
+    date_heure = Column(DateTime)
+    mots_cles = Column(String(255))
+
+    utilisateur = relationship('Utilisateur', back_populates='recherches')

@@ -1,111 +1,102 @@
-from datetime import datetime, timedelta
+import re
 from typing import Dict, List, Union
+from datetime import datetime, timedelta
+from recommendation.load_data import load_data
+from recommendation.prepocess import preprocess
+from recommendation.load_data import load_search_history_as_string
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-# from recommendation.load_data import fetch_data_and_save_to_csv, get_last_update_time, save_last_update_time 
 
-# Charger les données à partir du fichier CSV
-# data = get_last_update_time()
-# if data is not None and datetime.now() - data < timedelta(days=30):
-#     print("Les données sont à jour, pas besoin de les mettre à jour.")
-# else:
-#         # Les données CSV n'existent pas ou datent de plus de deux jours, mettre à jour à partir de la base de données
-#     fetch_data_and_save_to_csv()
-#     save_last_update_time(datetime.now())
+# Définir la fonction preprocess (voir ci-dessus)
+# ...
 
-df = pd.read_csv("formations_with_centres_interet.csv")
+try:
+    # Charger les données depuis une source externe
+    df = load_data()
+except Exception as e:
+    print(f"Erreur lors du chargement des données de formations: {e}")
 
-# Fonction pour prétraiter les données
-def preprocess(text):
-    text = str(text)
-    text = text.lower()
-    return text
 
-# Prétraiter les données
-df['descriptif'] = df['descriptif'].apply(preprocess)
-df['nom.1'] = df['nom.1'].apply(preprocess)
+try:
+    # Charger les données depuis une source externe
+    rechers_users = load_search_history_as_string()
+    print(rechers_users)
+except Exception as e:
+    print(f"Erreur lors du chargement des données de l'historique de recherche: {e}")
 
-# Initialiser le vectoriseur TF-IDF avec des paramètres personnalisés
-tfidf_vectorizer = TfidfVectorizer(stop_words='english', min_df=0.05, max_df=0.95)
 
-# Transformer les données en matrice TF-IDF
-tfidf_matrix = tfidf_vectorizer.fit_transform(df['descriptif'] + ' ' + df['nom.1'])
 
-# Définir une fonction pour recommander des formations
-# def recommend_courses(user_interests: str) -> List[Dict[str, Union[str, float]]]:
-#     # Prétraiter les centres d'intérêt de l'utilisateur
-#     user_interests = preprocess(user_interests)
-#     # Transformer les centres d'intérêt de l'utilisateur en vecteur TF-IDF
-#     user_vector = tfidf_vectorizer.transform([user_interests])
+try:
+    # Combinaison de colonnes pour former une colonne de texte à vectoriser
+    df["descriptions_and_caracteristiques"] = df["filiere_descriptif"] + " " + df["filiere_nom"] + " " + df["faculte_nom"] + " " + df["faculte_descriptif"]
 
-#     # Calculer les scores de similarité cosinus entre les centres d'intérêt de l'utilisateur et les caractéristiques des cours
-#     cosine_scores = linear_kernel(user_vector, tfidf_matrix).flatten()
+    # Prétraitement des descriptions et caractéristiques
+    df["descriptions_and_caracteristiques"] = df["descriptions_and_caracteristiques"].apply(preprocess)
 
-#     # Trier les indices des cours en fonction des scores de similarité cosinus
-#     similar_indices = cosine_scores.argsort()[::-1]
+    # Prétraitement des conditions d'admission
+    df["faculte_condition_admission"] = df["faculte_condition_admission"].apply(preprocess)
 
-#     # Obtenir les noms des cours recommandés à partir des indices triés
-#     #recommended_courses = df[["filieres_id","nom","descriptif","centre_interet","duree","cout","langue_enseignement","diplome_delivre","faculte_id","faculte_id","nom","descriptif","condition_admission","email","telephone","universite_id","universite_id","nom","ville","descriptif","email","telephone","site_web"]].iloc[similar_indices[:]].tolist()
-#     recommended_courses_df = df.iloc[similar_indices[:]].values.tolist()
-#     # recommended_courses = recommended_courses_df.to_dict(orient='records')
-#     # for course in recommended_courses:
-#     #     for key, value in course.items():
-#     #         if isinstance(value, float) and np.isnan(value):
-#     #             course[key] = 0.0  # Remplacer NaN par 0.0 ou une autre valeur par défaut selon votre choix
+    # Prétraitement des pays
+    df["universite_pays"] = df["universite_pays"].apply(preprocess)
 
-#     # return recommended_courses
-#  # Convertir la liste en DataFrame si ce n'est pas déjà le cas
-#     if not isinstance(recommended_courses_df, pd.DataFrame):
-#         recommended_courses_df = pd.DataFrame(recommended_courses_df)
+    # Initialisation du vectoriseur TF-IDF et transformation des descriptions et caractéristiques
+    vectorizer = TfidfVectorizer()
+    descriptions_and_caracteristiques_tfidf = vectorizer.fit_transform(df["descriptions_and_caracteristiques"])
 
-#     # Convertir le DataFrame en liste de dictionnaires
-#     recommended_courses = recommended_courses_df.to_dict(orient='records')
+except Exception as e:
+    print(f"Erreur lors du chargement et du traitement des données: {e}")
 
-#     # Remplacer les valeurs NaN par une valeur par défaut
-#     recommended_courses = []
-#     for index, row in recommended_courses_df.iterrows():
-#         course_dict = {}
-#         for column, value in row.iteritems():
-#             course_dict[column] = value
-#         recommended_courses.append(course_dict)
 
-#     # Remplacer les valeurs NaN par une valeur par défaut
-#     for course in recommended_courses:
-#         for key, value in course.items():
-#             if isinstance(value, float) and np.isnan(value):
-#                 course[key] = 0.0  # Remplacer NaN par 0.0 ou une autre valeur par défaut selon votre choix
 
-#     return recommended_courses
+def formations_recommandation_populaire(page: int = 1, page_size: int = 10,  history_weight: float = 2.0) -> List[Dict[str, Union[str, float]]]:
+    try:
+        # Prétraitement et vectorisation des centres d'intérêt de l'utilisateur
+        if rechers_users:
+            rechers_users = preprocess(" ".join(rechers_users))
+            user_vectortfidf = vectorizer.transform([rechers_users])
+            cosine_scores = linear_kernel(user_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
+        else:
+            # Si les centres d'intérêt ne sont pas fournis, initialiser les scores à zéro
+            cosine_scores = np.zeros(descriptions_and_caracteristiques_tfidf.shape[0])
 
-def recommend_courses(user_interests: str) -> List[Dict[str, Union[str, float]]]:
-    # Prétraiter les centres d'intérêt de l'utilisateur
-    user_interests = preprocess(user_interests)
-    # Transformer les centres d'intérêt de l'utilisateur en vecteur TF-IDF
-    user_vector = tfidf_vectorizer.transform([user_interests])
+       
+        # Combinaison des scores de similarité en pondérant davantage les centres d'intérêt
+        combined_scores = cosine_scores
+        
+        # Triage des indices des cours en fonction des scores combinés en ordre décroissant
+        similar_indices = combined_scores.argsort()[::-1]
+        
+        # Récupération des données des cours recommandés
+        recommended_formation_data = df.iloc[similar_indices]
 
-    # Calculer les scores de similarité cosinus entre les centres d'intérêt de l'utilisateur et les caractéristiques des cours
-    cosine_scores = linear_kernel(user_vector, tfidf_matrix).flatten()
+        # Colonnes à inclure dans les résultats
+        columns_to_include = ["filiere_id", "filiere_nom", "filiere_descriptif", "filiere_email", "filiere_telephone", "filiere_images_pc", "filiere_images_telephone", "filiere_images_tablettes", "faculte_id"]
 
-    # Trier les indices des cours en fonction des scores de similarité cosinus
-    similar_indices = cosine_scores.argsort()[::-1]
+        # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
+        recommended_courses = []
+        seen_courses = set()  # Ensemble pour suivre les identifiants uniques des cours
+        for _, row in recommended_formation_data.iterrows():
+            course_id = row["filiere_id"]
+            if course_id not in seen_courses:
+                course_info = {column: row[column] if column in row else None for column in columns_to_include}
+                recommended_courses.append(course_info)
+                seen_courses.add(course_id)  # Ajouter l'identifiant du cours à l'ensemble pour éviter les doublons
+        
+        # Remplacer les valeurs NaN par une valeur par défaut (0.0)
+        for metier in recommended_courses:
+            for key, value in metier.items():
+                if isinstance(value, float) and np.isnan(value):
+                    metier[key] = 0.0
 
-    # Obtenir les données des cours recommandés
-    recommended_courses_data = df.iloc[similar_indices]
+        # Implémentation de la pagination
+        start_index = (page - 1) * page_size  # Calcul de l'index de début
+        end_index = start_index + page_size  # Calcul de l'index de fin
+        paginated_courses = recommended_courses[start_index:end_index]  # Extraction de la sous-liste correspondant à la page
 
-    # Convertir les données en une liste de dictionnaires contenant le nom de la colonne et sa valeur pour chaque cours recommandé
-    recommended_courses = []
-    for _, row in recommended_courses_data.iterrows():
-        course_dict = {}
-        for column, value in row.items():
-            course_dict[column] = value
-        recommended_courses.append(course_dict)
+        return paginated_courses
 
-    # Remplacer les valeurs NaN par une valeur par défaut
-    for course in recommended_courses:
-        for key, value in course.items():
-            if isinstance(value, float) and np.isnan(value):
-                course[key] = 0.0  # Remplacer NaN par 0.0 ou une autre valeur par défaut selon votre choix
-
-    return recommended_courses
+    except Exception as e:
+        print(f"Erreur lors de la recommandation des cours: {e}")
+        return []

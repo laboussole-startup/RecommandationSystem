@@ -4,12 +4,12 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from users.routes import router as guest_router, user_router
-from recommendation.routes import router_recommandation, router_recommandation_metiers, router_recommandation_formation
+from recommendation.routes import router_recommandation, router_recommandation_metiers, router_recommandation_formation,router_recommandation_formation_populaire
 from auth.rooute import router as auth_router
 from model_orientation.routes import router_orientation
 from starlette.middleware.authentication import AuthenticationMiddleware
 from core.security import JWTAuth
-from recommendation.load_data import fetch_data_and_save_to_df  # Assurez-vous que fetch_data_and_save_to_df est correctement importé
+#from recommendation.load_data import fetch_data_and_save_to_df  # Assurez-vous que fetch_data_and_save_to_df est correctement importé
 
 app = FastAPI()
 
@@ -30,18 +30,10 @@ app.include_router(router_recommandation)
 app.include_router(router_orientation)
 app.include_router(router_recommandation_formation)
 app.include_router(router_recommandation_metiers)
+app.include_router(router_recommandation_formation_populaire)
 
 # Ajouter Middleware pour l'authentification
 app.add_middleware(AuthenticationMiddleware, backend=JWTAuth())
-
-@app.on_event("startup")
-async def startup_event():
-    # Appeler fetch_data_and_save_to_df() au démarrage de l'application
-    try:
-        df = fetch_data_and_save_to_df()
-        # Traitez les données si nécessaire
-    except Exception as e:
-        print(f"Erreur lors du chargement des données au démarrage: {e}")
 
 @app.get('/')
 def health_check():
