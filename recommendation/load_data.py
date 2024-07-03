@@ -141,7 +141,7 @@ def load_search_history_as_string():
             # Construction de la chaîne de caractères
             search_history_string = ""
             for result in results:
-                search_history_string += f"{result.mots_cles}\n"
+                search_history_string += f"{result.mots_cles}"
 
             return search_history_string
 
