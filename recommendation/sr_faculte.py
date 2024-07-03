@@ -1,28 +1,28 @@
 import re
 from typing import Dict, List, Union
 from datetime import datetime, timedelta
-from recommendation.load_data import fetch_data_and_save_to_df
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
+from recommendation.load_data import load_data
+
+# Fonction de prétraitement pour convertir le texte en minuscules
+def preprocess(text):
+    text = str(text)
+    text = text.lower()
+    return text
+
 try:
     # Charger les données depuis une source externe
-    df = fetch_data_and_save_to_df()
-    CSV_FILE_PATH = 'data.csv'
-
+    df = load_data()
+  
     # Supprimer la dernière ligne (potentiellement vide)
     df.drop(df.index[-1], inplace=True)
-
-    # Fonction de prétraitement pour convertir le texte en minuscules
-    def preprocess(text):
-        text = str(text)
-        text = text.lower()
-        return text
-
+    
     # Combinaison de colonnes pour former une colonne de texte à vectoriser
-    df["descriptions_and_caracteristiques"] = df["descriptif"] + " " + df["nom"] + " " + df["nom.1"] + " " + df["descriptif.1"] + " " + df["condition_admission"]
+    df["descriptions_and_caracteristiques"] = df["filiere_descriptif"] + " " + df["filiere_nom"] + " " + df["faculte_nom"] + " " + df["faculte_descriptif"]
 
     # Initialisation du vectoriseur TF-IDF et transformation des descriptions et caractéristiques
     vectorizer = TfidfVectorizer()
@@ -30,16 +30,16 @@ try:
 
     # Initialisation du vectoriseur TF-IDF et transformation des conditions d'admission
     vectorizer_condition_admission = TfidfVectorizer()
-    condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["condition_admission"].apply(preprocess))
+    condition_dadmission_tfidf = vectorizer_condition_admission.fit_transform(df["faculte_condition_admission"].apply(preprocess))
 
     # Initialisation du vectoriseur TF-IDF et transformation des pays
     vectorizer_pays = TfidfVectorizer()
-    vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["pays"].apply(preprocess))
+    vectorizer_pays_tfidf = vectorizer_pays.fit_transform(df["universite_pays"].apply(preprocess))
 
 except Exception as e:
-    print(f"Erreur lors du chargement et du traitement des données: {e}")
+    print(f"Erreur lors du chargement des données : {e}")
 
-def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
+def faculty_recommendation(user_interests: List[str] = None, pays_utilisateur: str = None, historique_recherche_utilisateur: List[str] = None, user_diplome: str = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0) -> List[Dict[str, Union[str, float]]]:
     try:
         # Prétraitement et vectorisation des centres d'intérêt de l'utilisateur
         if user_interests:
@@ -84,7 +84,7 @@ def recommend_courses(user_interests: List[str] = None, pays_utilisateur: str = 
         recommended_courses_data = df.iloc[similar_indices]
 
         # Colonnes à inclure dans les résultats
-        columns_to_include = ["faculte_id", "nom.1", "descriptif.1", "condition_admission", "email", "telephone", "images_pc.1", "images_telephone.1", "images_tablettes.1", "universite_id", "logo", "nom.2"]
+        columns_to_include = ["faculte_id", "faculte_nom", "faculte_descriptif", "faculte_condition_admission", "faculte_email", "faculte_telephone", "faculte_images_pc", "faculte_images_telephone", "faculte_images_tablettes", "universite_id"]
 
         # Conversion des données en une liste de dictionnaires en incluant seulement les colonnes spécifiées
         recommended_courses = []

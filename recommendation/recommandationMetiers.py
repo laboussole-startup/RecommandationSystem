@@ -34,16 +34,10 @@ try:
 except Exception as e:
     raise Exception(f"Erreur lors de la vectorisation des descriptions : {e}")
 
-def recommend_metiers(user_interests: List[str], user_competence: List[str] = None, historique_recherche_utilisateur: List[str] = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0, competence_weight: float = 1.5) -> List[Dict[str, Union[str, float]]]:
+def metiers_recommandations(user_interests: List[str], user_competence: List[str] = None, user_diplome: List[str] = None, page: int = 1, page_size: int = 10, interest_weight: float = 1.5, history_weight: float = 1.0, competence_weight: float = 1.5) -> List[Dict[str, Union[str, float]]]:
     try:
         # Prétraiter les centres d'intérêt de l'utilisateur
         user_interests = preprocess(" ".join(user_interests))
-        
-        # Prétraiter et vectoriser l'historique de recherche de l'utilisateur s'il est fourni
-        if historique_recherche_utilisateur:
-            historique_recherche_utilisateur_vectortfidf = vectorizer.transform([" ".join(historique_recherche_utilisateur)])
-        else:
-            historique_recherche_utilisateur_vectortfidf = vectorizer.transform([""])
         
         # Vectoriser les centres d'intérêt de l'utilisateur
         user_vectortfidf = vectorizer.transform([user_interests])
@@ -53,16 +47,17 @@ def recommend_metiers(user_interests: List[str], user_competence: List[str] = No
             user_competence_vectortfidf = vectorizer.transform([" ".join(user_competence)])
             competence_scores = linear_kernel(user_competence_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
         else:
-            competence_scores = np.zeros(len(descriptions_and_caracteristiques_tfidf))
+            competence_scores = np.zeros(descriptions_and_caracteristiques_tfidf.shape[0])
+        
+        # Prétraiter et vectoriser l'historique de recherche de l'utilisateur s'il est fourni
+        if user_diplome:
+            user_diplome_utilisateur_vectortfidf = vectorizer.transform([" ".join(user_diplome)])
+            similarite_historique_recherche = linear_kernel(user_diplome_utilisateur_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
+        else:
+            similarite_historique_recherche = np.zeros(descriptions_and_caracteristiques_tfidf.shape[0])
         
         # Calculer les scores de similarité cosinus entre les intérêts de l'utilisateur et les descriptions des métiers
         cosine_scores = linear_kernel(user_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
-        
-        # Calculer les scores de similarité cosinus entre l'historique de recherche et les descriptions des métiers s'il est fourni
-        if historique_recherche_utilisateur:
-            similarite_historique_recherche = linear_kernel(historique_recherche_utilisateur_vectortfidf, descriptions_and_caracteristiques_tfidf).flatten()
-        else:
-            similarite_historique_recherche = np.zeros(len(descriptions_and_caracteristiques_tfidf))
         
         # Combiner les scores de similarité en pondérant les intérêts, les compétences et l'historique de recherche
         combined_scores = (interest_weight * cosine_scores) + (competence_weight * competence_scores) + (history_weight * similarite_historique_recherche)
@@ -76,9 +71,7 @@ def recommend_metiers(user_interests: List[str], user_competence: List[str] = No
         # Convertir les données en une liste de dictionnaires
         recommended_metiers = []
         for _, row in recommended_metiers_data.iterrows():
-            metier_dict = {}
-            for column, value in row.items():
-                metier_dict[column] = value
+            metier_dict = row.to_dict()
             recommended_metiers.append(metier_dict)
         
         # Remplacer les valeurs NaN par une valeur par défaut (0.0)
@@ -96,5 +89,3 @@ def recommend_metiers(user_interests: List[str], user_competence: List[str] = No
     except Exception as e:
         print(f"Erreur lors de la recommandation des métiers : {e}")
         return []
-
-
