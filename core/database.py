@@ -1,3 +1,4 @@
+# database.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
@@ -10,7 +11,6 @@ settings = get_settings()
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
 
 # Crée une instance de la classe DeclarativeBase qui sera utilisée pour la définition des modèles
 Base = declarative_base()
@@ -26,8 +26,6 @@ def get_db() -> Session:
         yield db
     finally:
         db.close()
-
-
 
 
 

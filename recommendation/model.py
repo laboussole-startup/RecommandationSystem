@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey, DECIMAL, func
-from sqlalchemy.orm import relationship
+
 from core.database import Base
 from sqlalchemy.orm import relationship
 
