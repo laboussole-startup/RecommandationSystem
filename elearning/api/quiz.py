@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.dependencies import get_current_user  # Cette fonction doit être définie pour obtenir l'utilisateur actuel
-from elearning.models.modelsSQLAlchemy import Choice, Question, Quiz, Reponse, UserFormationLink, Utilisateur
+from elearning.models.modelsSQLAlchemy import Choice, Question, Quiz, Reponse, UserFormationLink, Utilisateurtest
 from elearning.schemas.SchemasPydantic import (
     ChoiceCreate, ChoiceOut, QuestionCreate, QuestionOut, QuestionResult, QuizAnswers, QuizCreate, QuizDetailsOut, 
     QuizEvaluation, QuizCorrectionResult, QuizEvaluationResult, QuizOut, QuizResult, QuizSubmission, ReponseCreate, ReponseOut, UserFormationLinkOut, QuestionCorrection
@@ -15,7 +15,7 @@ router = APIRouter()
 
 # Endpoint pour créer un nouveau quiz
 @router.post("/quiz/", response_model=QuizOut)
-def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour créer un nouveau quiz. 
     Accessible uniquement par un instructeur.
@@ -32,7 +32,7 @@ def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db), current_user: U
 
 # Endpoint pour créer une nouvelle question pour un quiz
 @router.post("/questions/", response_model=QuestionOut)
-def create_question(question: QuestionCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def create_question(question: QuestionCreate, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour créer une nouvelle question pour un quiz.
     Accessible uniquement par un instructeur.
@@ -50,7 +50,7 @@ def create_question(question: QuestionCreate, db: Session = Depends(get_db), cur
 
 # Endpoint pour créer une nouvelle réponse pour une question de type true_false
 @router.post("/reponses/", response_model=ReponseOut)
-def create_reponse(reponse: ReponseCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def create_reponse(reponse: ReponseCreate, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour créer une nouvelle réponse pour une question de type true_false.
     Accessible uniquement par un instructeur.
@@ -66,7 +66,7 @@ def create_reponse(reponse: ReponseCreate, db: Session = Depends(get_db), curren
 
 # Endpoint pour créer un nouveau choix pour une question de type single_choice ou multiple_choice
 @router.post("/choices/", response_model=ChoiceOut)
-def create_choice(choice: ChoiceCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def create_choice(choice: ChoiceCreate, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour créer un nouveau choix pour une question de type single_choice ou multiple_choice.
     Accessible uniquement par un instructeur.
@@ -103,7 +103,7 @@ def get_questions(quiz_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/quiz/{quiz_id}/questions", response_model=QuizDetailsOut)
-def get_quiz_details(quiz_id: int, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def get_quiz_details(quiz_id: int, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour récupérer les détails d'un quiz, y compris les questions et les choix associés.
     """
@@ -140,7 +140,7 @@ def get_quiz_details(quiz_id: int, db: Session = Depends(get_db), current_user: 
 
 
 @router.post("/quiz/{quiz_id}/submit", response_model=QuizResult)
-def submit_quiz(quiz_submission: QuizSubmission, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def submit_quiz(quiz_submission: QuizSubmission, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour soumettre les réponses d'un quiz et obtenir le résultat.
     """

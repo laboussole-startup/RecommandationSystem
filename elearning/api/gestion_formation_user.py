@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.dependencies import get_current_user  # Cette fonction doit être définie pour obtenir l'utilisateur actuel
-from elearning.models.modelsSQLAlchemy import Formation, Module, Quiz, UserFormationLink, UserModuleLink, UserQuizLink, Utilisateur
+from elearning.models.modelsSQLAlchemy import Formation, Module, Quiz, UserFormationLink, UserModuleLink, UserQuizLink, Utilisateurtest
 from elearning.schemas.SchemasPydantic import FormationRead, ModuleRead, QuizSummaryOut, UtilisateurRead, ValidatedModuleOut, ValidatedQuizOut, FormationStatusOut
 
 router = APIRouter()
 
 # Fonction pour obtenir le statut des formations d'un utilisateur
 @router.get("/user/{user_id}/formation-status", response_model=List[FormationStatusOut])
-async def get_user_formation_status( db: Session = Depends(get_db), current_user:Utilisateur = Depends(get_current_user)):
+async def get_user_formation_status( db: Session = Depends(get_db), current_user:Utilisateurtest = Depends(get_current_user)):
     try:
         
         user_formation_links = db.query(UserFormationLink).filter(UserFormationLink.user_id == current_user.id_utilisateur).all()
@@ -73,7 +73,7 @@ async def get_user_formation_status( db: Session = Depends(get_db), current_user
 
 # Endpoint pour voir les quiz validés et leurs notes pour un module
 @router.get("/user/modules/{module_id}/quizzes/validated/", response_model=List[ValidatedQuizOut])
-def get_validated_quizzes(module_id: int, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def get_validated_quizzes(module_id: int, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour voir les quiz validés et leurs notes pour un module.
     """
@@ -98,7 +98,7 @@ def get_validated_quizzes(module_id: int, db: Session = Depends(get_db), current
 
 
 @router.get("/user/formations/{formation_id}/modules/validated/", response_model=List[ValidatedModuleOut])
-def get_validated_modules(formation_id: int, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def get_validated_modules(formation_id: int, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour voir les modules validés et leurs notes pour une formation.
     """
@@ -137,7 +137,7 @@ def get_validated_modules(formation_id: int, db: Session = Depends(get_db), curr
 
 
 @router.get("/formations/{formation_id}/modules/status", response_model=List[Dict[str, Union[ModuleRead, bool]]])
-def get_modules_status(formation_id: int, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def get_modules_status(formation_id: int, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour voir tous les modules d'une formation avec leur statut (validé ou non).
     """

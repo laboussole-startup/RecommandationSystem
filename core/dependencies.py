@@ -6,7 +6,7 @@ from elearning.crud import utilisateur as crudutilisateur
 from elearning.models.modelsSQLAlchemy import Utilisateurtest
 from elearning.schemas import util
 from .database import get_db
-from .config import settings
+from .config import Settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
@@ -18,7 +18,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, Settings.JWT_SECRET, algorithms=[Settings.JWT_ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception

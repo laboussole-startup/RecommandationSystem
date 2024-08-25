@@ -4,12 +4,12 @@ from core.dependencies import get_current_user
 from core.database import get_db
 from elearning.quickstart.google_auth import get_calendar_service
 from elearning.schemas.SchemasPydantic import EventCreate, EventRead
-from elearning.models.modelsSQLAlchemy import Module, Event, Utilisateur
+from elearning.models.modelsSQLAlchemy import Module, Event, Utilisateurtest
 
 router = APIRouter()
 
 @router.post("/module/{module_id}/create_event", response_model=EventRead)
-def create_event(module_id: int, event_data: EventCreate, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def create_event(module_id: int, event_data: EventCreate, db: Session = Depends(get_db), current_user: Utilisateurtest = Depends(get_current_user)):
     """
     Endpoint pour créer un événement Google Calendar avec un lien Google Meet pour un module spécifique.
     """
