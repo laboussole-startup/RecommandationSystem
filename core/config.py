@@ -14,13 +14,14 @@ load_dotenv(dotenv_path=env_path)
 CSV_FILE_PATH = 'recommendation/formations_with_centres_interet.csv'
 
 
+
 class Settings(BaseSettings):
     # Database configuration
-    DB_USER: str = quote_plus(os.getenv('DB_USER'))
-    DB_PASSWORD: str = quote_plus(os.getenv('DB_PASSWORD'))
-    DB_NAME: str = quote_plus(os.getenv('DB_NAME'))
-    DB_HOST: str = quote_plus(os.getenv('DB_HOST'))
-    DB_PORT: str = quote_plus(os.getenv('DB_PORT'))
+    DB_USER: str = quote_plus(os.getenv('POSTGRES_USER'))
+    DB_PASSWORD: str = quote_plus(os.getenv('POSTGRES_PASSWORD'))
+    DB_NAME: str = quote_plus(os.getenv('POSTGRES_DB'))
+    DB_HOST: str = quote_plus(os.getenv('POSTGRES_SERVER'))
+    DB_PORT: str = quote_plus(os.getenv('POSTGRES_PORT'))
     
     #Construire l'URL de la base de données
     DATABASE_URL: str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

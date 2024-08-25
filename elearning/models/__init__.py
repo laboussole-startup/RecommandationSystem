@@ -1,4 +1,4 @@
-from elearning.models.modelsSQLAlchemy import Formation,Module,ConferenceVideo,Question,Quiz,Utilisateur,LeconVideo,Historique,Reponse
+from elearning.models.modelsSQLAlchemy import Formation,Module,ConferenceVideo,Question,Quiz,Utilisateurtest,LeconVideo,Historique,Reponse
 # from .module import Module
 # from .conference_video import ConférenceVidéo
 #from .quiz import Quiz

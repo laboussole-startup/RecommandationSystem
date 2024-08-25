@@ -1,13 +1,13 @@
 
 from elearning.schemas.util import get_password_hash
 from sqlalchemy.orm import Session
-from elearning.models.modelsSQLAlchemy import Utilisateur, RoleEnum
-from elearning.models.modelsSQLAlchemy import Utilisateur
+from elearning.models.modelsSQLAlchemy import Utilisateurtest, RoleEnum
+from elearning.models.modelsSQLAlchemy import Utilisateurtest
 from elearning.schemas.SchemasPydantic import UtilisateurCreate,UtilisateurBase
 
 # Fonction pour créer un utilisateur
 def create_utilisateur(db: Session, utilisateur: UtilisateurCreate):
-    db_utilisateur = Utilisateur(
+    db_utilisateur = Utilisateurtest(
         nom=utilisateur.nom,
         prenom=utilisateur.prenom,
         email=utilisateur.email,
@@ -24,7 +24,7 @@ def create_utilisateur(db: Session, utilisateur: UtilisateurCreate):
 
 
 def get_utilisateur(db: Session, utilisateur_id: int):
-    return db.query(Utilisateur).filter(Utilisateur.id_utilisateur == utilisateur_id).first()
+    return db.query(Utilisateurtest).filter(Utilisateurtest.id_utilisateur == utilisateur_id).first()
 
 def get_utilisateur_by_email(db: Session, email: str):
-    return db.query(Utilisateur).filter(Utilisateur.email == email).first()
+    return db.query(Utilisateurtest).filter(Utilisateurtest.email == email).first()
