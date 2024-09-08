@@ -19,14 +19,19 @@ def create_cours(
     return createCours(db=db, lesson=lesson)
    
 
-@router.get("/cours_module/{module_id}", response_model=list[ModuleRead])
-def read_modules(formation_id: int, db: Session = Depends(get_db)):
-    db_formation = get_cours_module(db, formation_id=formation_id)
-    if db_formation is None:
-        raise HTTPException(status_code=404, detail="Formation not found")
-    return db_formation
+@router.get("/modules/{module_id}/first_video", response_model=LeconVideoBase)
+def read_first_video(module_id: int, db: Session = Depends(get_db)):
+    video = get_cours(db, module_id=module_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video
 
-@router.get("/cours/{cours_id}", response_model=ModuleRead)
-def read_cours(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    formations = get_cours(db, skip=skip, limit=limit)
-    return formations
+
+
+@router.get("/modules/{module_id}/videos", response_model=List[LeconVideoBase])
+def read_videos(module_id: int, db: Session = Depends(get_db)):
+    videos = get_cours_module(db, module_id=module_id)
+    if not videos:
+        raise HTTPException(status_code=404, detail="No videos found")
+    return videos
+

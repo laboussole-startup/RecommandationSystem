@@ -24,10 +24,10 @@ def createCours(db: Session, lesson: LeconVideoCreate):
 
 
 
+
+
 def get_cours(db: Session, module_id: int):
     return db.query(LeconVideo).filter(LeconVideo.id_module == module_id).first()
 
-def get_cours_module(db: Session, module_id):
-    return db.query(LeconVideo).filter(LeconVideo.id_module==module_id).all()
-
-
+def get_cours_module(db: Session, module_id: int):
+    return db.query(LeconVideo).filter(LeconVideo.id_module == module_id).all()

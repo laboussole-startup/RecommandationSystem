@@ -69,6 +69,8 @@ class LeconVideoBase(BaseModel):
     url_video: str
     url_image_lecon: str
 
+   
+
 class LeconVideoCreate(LeconVideoBase):
     id_module: int
 

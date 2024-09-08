@@ -1,32 +1,30 @@
-# database.py
+# core/database.py
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from contextlib import contextmanager
 from sqlalchemy.ext.declarative import declarative_base
+from contextlib import contextmanager
 from core.config import get_settings
 
+# Charger les paramètres
 settings = get_settings()
 
 # Configuration de la base de données SQLAlchemy
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+engine = create_engine(settings.DATABASE_URL)
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Crée une instance de la classe DeclarativeBase qui sera utilisée pour la définition des modèles
+# Crée une instance de la classe DeclarativeBase pour les modèles
 Base = declarative_base()
 
-# Créer une SessionLocal qui sera utilisée pour interagir avec la base de données
+# Créer une session pour interagir avec la base de données
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Fonction pour obtenir une session de base de données
-@contextmanager
-def get_db() -> Session:
+# Gestionnaire de contexte pour ouvrir et fermer une session de la base de données
+def get_db():
     db = SessionLocal()
     try:
-        yield db
+        return db
+    except Exception as e:
+        db.rollback()
+        raise e
     finally:
         db.close()
-
-
-
-

@@ -1,30 +1,36 @@
-
-from elearning.schemas.util import get_password_hash
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from core.database import get_db
 from sqlalchemy.orm import Session
-from elearning.models.modelsSQLAlchemy import Utilisateurtest, RoleEnum
-from elearning.models.modelsSQLAlchemy import Utilisateurtest
-from elearning.schemas.SchemasPydantic import UtilisateurCreate,UtilisateurBase
+from elearning.crud import auth as crudutilisateur
+from core.config import get_settings
 
-# Fonction pour créer un utilisateur
-def create_utilisateur(db: Session, utilisateur: UtilisateurCreate):
-    db_utilisateur = Utilisateurtest(
-        nom=utilisateur.nom,
-        prenom=utilisateur.prenom,
-        email=utilisateur.email,
-        mot_de_passe=get_password_hash(utilisateur.mot_de_passe),
-        role=RoleEnum(utilisateur.role),  # Assurez-vous que 'role' est soit 'utilisateur' soit 'instructeur'
-        est_actif=utilisateur.est_actif
-    )
-    db.add(db_utilisateur)
-    db.commit()
-    db.refresh(db_utilisateur)
-    return db_utilisateur
+settings = get_settings()
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
-def get_utilisateur(db: Session, utilisateur_id: int):
-    return db.query(Utilisateurtest).filter(Utilisateurtest.id_utilisateur == utilisateur_id).first()
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    return encoded_jwt
 
-def get_utilisateur_by_email(db: Session, email: str):
-    return db.query(Utilisateurtest).filter(Utilisateurtest.email == email).first()
+def authenticate_user(email: str, password: str):
+    with get_db() as db:
+        user = crudutilisateur.get_utilisateur_by_email(db, email=email)
+        if not user:
+            return False
+        if not verify_password(password, user.mot_de_passe):  # Assurez-vous que 'mot_de_passe' est bien le nom de l'attribut du mot de passe
+            return False
+        return user

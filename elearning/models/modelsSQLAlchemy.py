@@ -36,7 +36,7 @@ class Formation(Base):
     id_instructeur = Column(Integer, ForeignKey('utilisateurs.id_utilisateur'))
     url_image_formation = Column(String(255))
     
-    instructeur = relationship('Utilisateur', back_populates='formations')
+    instructeur = relationship('Utilisateurtest', back_populates='formations')
     modules = relationship('Module', back_populates='formation')
     historiques = relationship('Historique', back_populates='formation')
     inscrits = relationship('UserFormationLink', back_populates='formation')
@@ -127,7 +127,7 @@ class UserFormationLink(Base):
     user_id = Column(Integer, ForeignKey('utilisateurs.id_utilisateur'), primary_key=True)
     formation_id = Column(Integer, ForeignKey('formations.id_formation'), primary_key=True)
     
-    utilisateur = relationship('Utilisateur', back_populates='inscrits')
+    utilisateur = relationship('Utilisateurtest', back_populates='inscrits')
     formation = relationship('Formation', back_populates='inscrits')
 
 
@@ -143,7 +143,7 @@ class Historique(Base):
     date_debut = Column(Date)
     date_fin = Column(Date)
     
-    utilisateur = relationship('Utilisateur', back_populates='historiques')
+    utilisateur = relationship('Utilisateurtest', back_populates='historiques')
     formation = relationship('Formation', back_populates='historiques')
 
 # ConferenceVideo model

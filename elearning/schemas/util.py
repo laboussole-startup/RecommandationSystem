@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from elearning.crud import utilisateur as crudutilisateur
-from core.config import Settings
+from elearning.crud import auth as crudutilisateur
+from core.config import get_settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -14,13 +14,15 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    print("JWT_SECRET:", get_settings().JWT_SECRET)
+    print("JWT_ALGORITHM:", get_settings().JWT_ALGORITHM)
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, Settings.JWT_SECRET, algorithm=Settings.JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, get_settings().JWT_SECRET, algorithm=get_settings().JWT_ALGORITHM)
     return encoded_jwt
 
 def authenticate_user(db: Session, email: str, password: str):
@@ -30,3 +32,14 @@ def authenticate_user(db: Session, email: str, password: str):
     if not verify_password(password, user.mot_de_passe):
         return False
     return user
+
+
+
+
+
+
+
+
+
+
+
